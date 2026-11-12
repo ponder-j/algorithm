@@ -3,13 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
   <title>算法动画</title>
-  <script src="assets/algorithms.js"></script>
-  <script>
-    window.location.replace(new URL(window.algorithmCatalog[0].path, window.location.href).href);
-  </script>
+  <link rel="stylesheet" href="assets/base.css">
+  <link rel="stylesheet" href="assets/home.css">
+  <link rel="stylesheet" href="assets/navigation.css">
+  <script defer src="assets/algorithms.js"></script>
+  <script defer src="assets/home.js"></script>
+  <script defer src="assets/navigation.js"></script>
 </head>
-<body>
-  <p><a href="manacher/index.html">进入马拉车算法动画</a></p>
+<body data-page="home">
+  <main class="shell home-shell">
+    <header class="home-heading"><h1>算法动画</h1></header>
+    <section class="cover-grid" id="home-algorithms" aria-label="选择算法动画"></section>
+    <footer class="home-footer"><a href="https://github.com/ponder-j/algorithm" target="_blank" rel="noreferrer">GitHub 源码</a></footer>
+  </main>
 </body>
 </html>

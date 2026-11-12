@@ -1,0 +1,127 @@
+.home-shell {
+  max-width: 1240px;
+  padding: 72px 48px 40px;
+}
+
+.home-heading {
+  margin-bottom: 44px;
+}
+
+.home-heading h1 {
+  font-size: 48px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -1.3px;
+}
+
+.cover-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.cover-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  transition: box-shadow .2s;
+}
+
+.cover-card:hover {
+  box-shadow: 0 9px 30px rgb(35 53 85 / 9%);
+}
+
+.cover-card:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 5px;
+}
+
+.cover-preview {
+  position: relative;
+  aspect-ratio: 2.05;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.cover-preview img {
+  position: absolute;
+  inset: 20px 16px;
+  display: block;
+  width: calc(100% - 32px);
+  height: calc(100% - 40px);
+  object-fit: contain;
+}
+
+.cover-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 24px 26px 26px;
+}
+
+.cover-content h2 {
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.cover-problems {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.cover-action {
+  display: block;
+  padding-top: 25px;
+  margin-top: auto;
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.home-footer {
+  padding-top: 32px;
+  font-size: 12px;
+}
+
+.home-footer a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.home-footer a:hover {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+@media (max-width: 1120px) {
+  .home-shell { padding: 54px 28px 32px; }
+  .cover-grid { gap: 18px; }
+  .cover-content { padding: 20px; }
+  .cover-content h2 { font-size: 19px; }
+}
+
+@media (max-width: 900px) {
+  .cover-grid { grid-template-columns: minmax(0, 1fr); }
+  .cover-preview { aspect-ratio: 2.4; }
+}
+
+@media (max-width: 480px) {
+  .home-shell { padding: 78px 16px 28px; }
+  .home-heading { margin-bottom: 28px; }
+  .home-heading h1 { font-size: 36px; letter-spacing: -.8px; }
+  .cover-grid { gap: 20px; }
+  .cover-preview { aspect-ratio: 1.95; }
+  .cover-preview img { inset: 14px 10px; width: calc(100% - 20px); height: calc(100% - 28px); }
+  .cover-content { padding: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-card { transition: none; }
+}

@@ -12,7 +12,7 @@
 ## 新增算法
 
 1. 建立独立的算法目录，在其中添加 `index.html`。
-2. 在 `assets/algorithms.js` 中登记算法名称、页面路径及对应的 LeetCode 题号、题名和链接。每个算法可以关联多道题。
+2. 在 `assets/algorithms.js` 中登记算法名称、页面路径及对应的 LeetCode 题号、题名和链接。每个算法可以关联多道题，可选用 `preview.src` 和 `preview.alt` 添加首页预览图。
 3. 在新页面的 `<head>` 中引入公共资源。
 
 ```html
@@ -24,7 +24,7 @@
 
 4. 给 `<body>` 设置与清单一致的 `data-algorithm`，例如 `data-algorithm="manacher"`。主内容放在 `<main class="shell">` 中，页头可添加 `<div data-algorithm-problems></div>` 显示题目链接。
 
-公共脚本会生成算法侧栏、标记当前页面，并记住桌面端的收起状态。首页默认打开清单中的第一个算法。
+首页展示从算法清单生成的封面卡片，点击卡片进入对应动画。公共脚本会生成算法侧栏、标记当前页面，并记住桌面端的收起状态。各动画页可通过侧栏的“首页”入口返回封面。
 
 ## 发布更新
 

@@ -38,6 +38,15 @@
   backdrop.setAttribute("aria-label", "关闭算法目录");
   backdrop.hidden = true;
 
+  const homeItem = document.createElement("li");
+  const homeLink = document.createElement("a");
+  homeLink.className = "algorithm-link home-link";
+  homeLink.href = new URL("index.html", siteRoot).href;
+  homeLink.textContent = "首页";
+  if (document.body.dataset.page === "home") homeLink.setAttribute("aria-current", "page");
+  homeItem.append(homeLink);
+  list.append(homeItem);
+
   for (const algorithm of catalog) {
     const item = document.createElement("li");
     const link = document.createElement("a");
