@@ -84,6 +84,37 @@ body.has-algorithm-navigation.navigation-collapsed {
   list-style: none;
 }
 
+.algorithm-search {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.algorithm-search .field-label {
+  color: var(--muted, #59697e);
+  font-size: 12px;
+}
+
+.algorithm-search input {
+  height: 40px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.algorithm-search-empty {
+  padding: 12px;
+  color: var(--muted, #59697e);
+  font-size: 12px;
+}
+
+.algorithm-search-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .algorithm-link {
   display: block;
   padding: 12px;
@@ -198,5 +229,10 @@ body.has-algorithm-navigation.navigation-collapsed {
 
   .algorithm-sidebar-header {
     margin-bottom: 22px;
+  }
+
+  .algorithm-search input {
+    height: 44px;
+    font-size: 16px;
   }
 }

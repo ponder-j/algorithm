@@ -25,12 +25,23 @@
       <h2 class="algorithm-sidebar-title" id="algorithm-sidebar-title"><a>算法动画</a></h2>
       <button class="navigation-toggle" type="button" aria-controls="algorithm-navigation"></button>
     </div>
-    <nav id="algorithm-navigation" aria-label="算法选择"><ul class="algorithm-list"></ul></nav>
+    <nav id="algorithm-navigation" aria-label="算法选择">
+      <label class="field algorithm-search" for="algorithm-search">
+        <span class="field-label">搜索算法</span>
+        <input id="algorithm-search" type="search" placeholder="名称或 LeetCode 题号" autocomplete="off" spellcheck="false" aria-controls="algorithm-list">
+      </label>
+      <ul class="algorithm-list" id="algorithm-list"></ul>
+      <p class="algorithm-search-empty" hidden>没有匹配的算法</p>
+      <span class="algorithm-search-status" role="status" aria-live="polite"></span>
+    </nav>
   `;
   sidebar.querySelector(".algorithm-sidebar-title a").href = new URL("index.html", siteRoot).href;
   const toggle = sidebar.querySelector("button");
   const navigation = sidebar.querySelector("nav");
   const list = sidebar.querySelector("ul");
+  const search = sidebar.querySelector("input");
+  const emptyMessage = sidebar.querySelector(".algorithm-search-empty");
+  const searchStatus = sidebar.querySelector(".algorithm-search-status");
   const backdrop = document.createElement("button");
   backdrop.className = "navigation-backdrop";
   backdrop.type = "button";
@@ -38,15 +49,11 @@
   backdrop.setAttribute("aria-label", "关闭算法目录");
   backdrop.hidden = true;
 
-  const homeItem = document.createElement("li");
-  const homeLink = document.createElement("a");
-  homeLink.className = "algorithm-link home-link";
-  homeLink.href = new URL("index.html", siteRoot).href;
-  homeLink.textContent = "首页";
-  if (document.body.dataset.page === "home") homeLink.setAttribute("aria-current", "page");
-  homeItem.append(homeLink);
-  list.append(homeItem);
+  function normalizeSearch(value) {
+    return value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+  }
 
+  const entries = [];
   for (const algorithm of catalog) {
     const item = document.createElement("li");
     const link = document.createElement("a");
@@ -65,7 +72,31 @@
     }
     item.append(link);
     list.append(item);
+    entries.push({
+      item,
+      algorithm,
+      searchText: normalizeSearch([
+        algorithm.name,
+        algorithm.id,
+        ...algorithm.problems.map((problem) => `LeetCode ${problem.number} ${problem.title}`)
+      ].join(" "))
+    });
   }
+
+  search.addEventListener("input", () => {
+    const query = normalizeSearch(search.value);
+    const problemNumber = /^(?:leetcode|lc)?[#第]?(\d+)题?$/.exec(query);
+    let matchCount = 0;
+    for (const entry of entries) {
+      const matches = problemNumber
+        ? entry.algorithm.problems.some((problem) => problem.number === Number(problemNumber[1]))
+        : entry.searchText.includes(query);
+      entry.item.hidden = !matches;
+      if (matches) matchCount++;
+    }
+    emptyMessage.hidden = matchCount > 0;
+    searchStatus.textContent = `找到 ${matchCount} 个算法`;
+  });
 
   const problemContainer = document.querySelector("[data-algorithm-problems]");
   if (current && problemContainer) {
@@ -124,7 +155,8 @@
       closeNavigation();
     }
     if (event.key === "Tab") {
-      const controls = sidebar.querySelectorAll("a[href], button");
+      const controls = Array.from(sidebar.querySelectorAll("a[href], button, input"))
+        .filter((control) => !control.disabled && control.getClientRects().length > 0);
       const first = controls[0];
       const last = controls[controls.length - 1];
       if (event.shiftKey && document.activeElement === first) {
