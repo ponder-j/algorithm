@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>马拉车算法 · 交互动画</title>
+  <style>
+    :root {
+      --page: #f4f6fa;
+      --surface: #ffffff;
+      --text: #1d2b3f;
+      --muted: #59697e;
+      --line: #e1e7ef;
+      --soft: #f1f4f8;
+      --blue: #285dcc;
+      --blue-soft: #e9f0ff;
+      --orange: #9c4d05;
+      --orange-soft: #fff0dc;
+      --purple: #7850b3;
+      --purple-soft: #f0eafa;
+      --green: #1b7457;
+      --green-soft: #e5f5ed;
+      --red: #b13d4d;
+      --red-soft: #ffedf0;
+      --shadow: 0 5px 24px rgb(35 53 85 / 4%);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--page);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button, input, select { font: inherit; }
+    button, select, input[type="range"] { cursor: pointer; }
+    button { color: inherit; }
+    button:disabled { cursor: default; opacity: .42; }
+    button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 3px;
+    }
+    [hidden] { display: none !important; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 27px; font-weight: 650; letter-spacing: -.6px; }
+    h2 { font-size: 17px; font-weight: 600; }
+    h3 { font-size: 14px; font-weight: 600; }
+    a { color: var(--blue); text-underline-offset: 3px; }
+    code, .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-variant-numeric: tabular-nums; }
+    code { font-size: .95em; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+    .shell { max-width: 1320px; margin: auto; padding: 30px 32px 24px; }
+    .heading { display: flex; align-items: baseline; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+    .heading span { font-size: 16px; color: var(--muted); letter-spacing: 0; font-weight: 400; }
+    .surface { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); }
+    .input-surface { padding: 19px 24px; margin-bottom: 20px; }
+    .input-top { display: flex; align-items: end; gap: 12px; }
+    .field { flex: 1; min-width: 0; }
+    .field-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; align-items: baseline; }
+    .field input { width: 100%; height: 43px; border: 1px solid #cbd5e2; background: var(--surface); color: var(--text); border-radius: 7px; padding: 8px 12px; font-size: 16px; }
+    .button { border: 1px solid var(--line); border-radius: 7px; background: var(--surface); padding: 8px 13px; min-height: 40px; white-space: nowrap; transition: background .15s; }
+    .button:hover:enabled { background: var(--soft); }
+    .button.primary { background: var(--blue); border-color: var(--blue); color: var(--surface); }
+    .button.primary:hover:enabled { background: #204fae; }
+    .button.quiet { border-color: transparent; background: transparent; }
+    .presets { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 12px; }
+    .preset { border: 0; background: var(--soft); border-radius: 5px; padding: 5px 10px; min-height: 32px; font-size: 12px; }
+    .preset:hover { background: var(--blue-soft); }
+    .preset[aria-pressed="true"] { background: var(--blue-soft); color: var(--blue); }
+    .error { color: var(--red); margin-top: 8px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 334px; gap: 20px; align-items: start; }
+    .simulation { min-width: 0; overflow: hidden; }
+    .simulation-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; padding: 21px 24px 10px; }
+    .readouts { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; }
+    .readouts code { color: var(--text); font-size: 14px; }
+    .source-line { display: flex; align-items: center; gap: 13px; margin: 0 24px 12px; min-height: 42px; }
+    .row-name { color: var(--muted); width: 15px; flex-shrink: 0; }
+    #original { display: flex; flex-wrap: wrap; gap: 3px; min-height: 35px; align-items: center; }
+    .source-char { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; padding: 3px 4px; border-radius: 4px; font-size: 16px; transition: background .25s; }
+    .source-char.selected { background: var(--blue-soft); color: var(--blue); }
+    .array-caption { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding: 0 24px; font-size: 12px; color: var(--muted); }
+    .scroll-hint { font-size: 11px; }
+    .array-scroll { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; padding: 0 22px; }
+    .array-stage { height: 310px; position: relative; margin: 0 auto; isolation: isolate; }
+    .known-range { position: absolute; height: 41px; top: 24px; border-radius: 5px; background: var(--blue-soft); transition: left .36s ease, width .36s ease; }
+    .range-label { position: absolute; top: 31px; text-align: center; font-size: 11px; color: var(--blue); white-space: nowrap; }
+    .boundary-tag { position: absolute; top: 2px; font: 11px/20px "SFMono-Regular", Consolas, monospace; color: var(--muted); white-space: nowrap; }
+    .boundary-tag.right { transform: translateX(-100%); }
+    .mirror-range { position: absolute; top: 102px; height: 101px; background: var(--purple-soft); opacity: .65; border-radius: 5px; transition: left .36s ease, width .36s ease; z-index: -1; }
+    .active-range { position: absolute; top: 140px; height: 44px; background: var(--blue-soft); border-radius: 5px; transition: left .36s ease, width .36s ease; z-index: -1; }
+    .borrow-line { position: absolute; top: 195px; height: 5px; background: var(--blue); border-radius: 2px; opacity: .6; transition: left .36s ease, width .36s ease; }
+    .current-radius-label { position: absolute; top: 208px; font-size: 12px; white-space: nowrap; text-align: center; }
+    .center-line { position: absolute; top: 66px; height: 128px; border-left: 1px dashed #7f9bc8; transition: left .36s ease; pointer-events: none; }
+    .limit-line { position: absolute; top: 65px; height: 124px; border-left: 1px dashed #b1c3e2; transition: left .36s ease; pointer-events: none; }
+    .cursor-line { position: absolute; top: 122px; height: 71px; border-left: 2px solid var(--orange); transition: left .36s ease; pointer-events: none; }
+    .mirror-svg { position: absolute; inset: 0; width: 100%; height: 310px; pointer-events: none; overflow: visible; }
+    .mirror-svg path { stroke: var(--purple); stroke-width: 1.5; fill: none; }
+    .mirror-svg circle { fill: var(--purple); }
+    .array-column { position: absolute; top: 0; text-align: center; }
+    .index { position: absolute; top: 117px; left: 0; width: 100%; font-size: 11px; color: var(--muted); }
+    .char { position: absolute; top: 144px; left: 2px; right: 2px; height: 36px; display: flex; justify-content: center; align-items: center; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); font-size: 17px; transition: background .24s, color .24s, transform .24s; }
+    .char.separator { color: var(--muted); font-weight: 400; }
+    .array-column.in-current .char { background: var(--blue-soft); }
+    .array-column.is-mirror .char { background: var(--purple-soft); color: var(--purple); }
+    .array-column.is-current .char { background: var(--orange-soft); color: var(--orange); border-bottom: 3px solid var(--orange); font-weight: 600; }
+    .array-column.is-probe .char { background: var(--soft); border: 2px dashed var(--text); }
+    .array-column.is-match .char { background: var(--green-soft); color: var(--green); border: 2px solid var(--green); animation: pair-pop .32s ease; }
+    .array-column.is-mismatch .char { background: var(--red-soft); color: var(--red); border: 2px solid var(--red); }
+    .pointer-label { position: absolute; top: 92px; left: 0; width: 100%; font-size: 12px; font-weight: 600; color: var(--orange); }
+    .is-mirror .pointer-label { color: var(--purple); }
+    .radius-button { position: absolute; top: 243px; left: 0; width: 100%; min-height: 38px; padding: 3px 0; border: 0; border-radius: 5px; background: transparent; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .radius-button:hover { background: var(--soft); }
+    .is-current .radius-button { background: var(--orange-soft); color: var(--orange); font-weight: 600; }
+    .is-mirror .radius-button { background: var(--purple-soft); color: var(--purple); }
+    .radius-button.unknown { color: #8a95a4; }
+    .radius-bar { position: absolute; bottom: 18px; left: 25%; width: 50%; max-height: 20px; border-radius: 2px 2px 0 0; background: #c6d6f6; transition: height .3s; pointer-events: none; }
+    .legend { display: flex; flex-wrap: wrap; gap: 7px 17px; padding: 0 24px 18px; color: var(--muted); font-size: 12px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 3px; }
+    .swatch.known { background: #a6bee9; }
+    .swatch.current { background: #e8b372; }
+    .swatch.mirror { background: #bca2dc; }
+    .transport { border-top: 1px solid var(--line); padding: 17px 24px 19px; }
+    .play-buttons { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .speed-control { display: flex; align-items: center; gap: 5px; margin-left: auto; font-size: 12px; color: var(--muted); }
+    .speed-control select { border: 1px solid var(--line); border-radius: 6px; padding: 6px; background: var(--surface); color: var(--text); min-height: 38px; }
+    .timeline-label { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); margin-top: 15px; font-size: 12px; }
+    input[type="range"] { width: 100%; accent-color: var(--blue); margin: 8px 0 0; min-height: 20px; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 17px 24px; border-top: 1px solid var(--line); }
+    .stat-label { font-size: 11px; color: var(--muted); }
+    .stat-value { font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+    .best-line { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 15px 24px 20px; }
+    #best-value { font-size: 17px; overflow-wrap: anywhere; }
+    .explanation { padding: 0 21px 20px; min-width: 0; }
+    .tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+    .tab { border: 0; border-bottom: 2px solid transparent; padding: 18px 0 12px; background: transparent; font-size: 13px; color: var(--muted); }
+    .tab[aria-selected="true"] { color: var(--blue); border-bottom-color: var(--blue); }
+    .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 0; list-style: none; margin: 0 0 21px; color: var(--muted); font-size: 11px; }
+    .pipeline li { border-top: 3px solid var(--line); padding-top: 7px; text-align: center; }
+    .pipeline li[aria-current="step"] { border-color: var(--blue); color: var(--blue); }
+    .step-content { min-height: 205px; }
+    .step-content h2 { margin-bottom: 9px; }
+    #step-description { min-height: 70px; }
+    .equation { margin-top: 13px; padding: 11px 12px; border-radius: 6px; background: var(--soft); font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; }
+    .state-note { margin: 13px 0 19px; color: var(--muted); font-size: 12px; min-height: 38px; }
+    details { border-top: 1px solid var(--line); padding-top: 13px; margin-top: 16px; }
+    summary { cursor: pointer; font-weight: 500; }
+    details p { margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .dictionary { display: grid; grid-template-columns: 32px 1fr; gap: 9px 8px; font-size: 12px; margin: 12px 0 0; }
+    .dictionary dt { font-family: "SFMono-Regular", Consolas, monospace; }
+    .dictionary dd { margin: 0; color: var(--muted); }
+    .definition { margin-top: 13px; color: var(--muted); font-size: 13px; }
+    .case { padding: 15px 0; border-bottom: 1px solid var(--line); }
+    .case h3 { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 4px; }
+    .case button { border: 0; padding: 4px 0 4px 8px; background: transparent; color: var(--blue); font-size: 12px; }
+    .case p { margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .case.active { background: var(--blue-soft); margin: 0 -9px; padding-left: 9px; padding-right: 9px; border-radius: 6px; border-bottom-color: transparent; }
+    #mirror-live { margin-top: 15px; font-size: 12px; color: var(--muted); }
+    .proof-list { margin: 16px 0; padding-left: 19px; color: var(--muted); font-size: 13px; }
+    .proof-list li { margin: 10px 0; padding-left: 3px; }
+    .cost-chart { margin-top: 20px; }
+    .cost-row { margin: 12px 0; }
+    .cost-label { display: flex; align-items: baseline; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+    .cost-track { background: var(--soft); height: 10px; border-radius: 3px; overflow: hidden; }
+    .cost-fill { background: var(--blue); height: 100%; transition: width .4s; }
+    .cost-fill.naive { background: #9aa8bb; }
+    .cost-summary { margin-top: 12px; font-size: 12px; color: var(--muted); }
+    .cost-preset { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; }
+    footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 18px; font-size: 11px; color: var(--muted); }
+    @keyframes pair-pop { 50% { transform: scale(1.08); } }
+    @media (max-width: 1120px) {
+      .shell { padding: 24px 20px; }
+      .layout { grid-template-columns: minmax(0, 1fr) 302px; gap: 15px; }
+      .transport, .stats { padding-left: 18px; padding-right: 18px; }
+      .speed-control { margin-left: 0; }
+    }
+    @media (max-width: 900px) {
+      .shell { max-width: 800px; }
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .explanation { padding: 0 24px 22px; }
+      .step-content, #step-description { min-height: 0; }
+      .speed-control { margin-left: auto; }
+    }
+    @media (max-width: 480px) {
+      .shell { padding: 20px 12px; }
+      h1 { font-size: 24px; }
+      .heading { gap: 8px; margin-bottom: 16px; }
+      .heading span { font-size: 14px; }
+      .input-surface { padding: 16px; }
+      .input-top { flex-wrap: wrap; }
+      .field { flex-basis: 100%; }
+      .input-top .button { width: 100%; }
+      .presets { gap: 6px; }
+      .simulation-head, .source-line, .array-caption, .legend, .best-line { padding-left: 16px; padding-right: 16px; }
+      .source-line { margin-left: 0; margin-right: 0; }
+      .simulation-head { align-items: start; flex-direction: column; }
+      .readouts { gap: 12px; }
+      .transport, .stats { padding-left: 16px; padding-right: 16px; }
+      .play-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+      .speed-control { margin-left: 0; justify-content: space-between; grid-column: 1 / -1; }
+      .speed-control select { flex: 1; max-width: 130px; }
+      .stats { gap: 6px; }
+      .stat-label { font-size: 11px; }
+      .stat-value { font-size: 18px; }
+      .explanation { padding-left: 18px; padding-right: 18px; }
+      .tabs { gap: 20px; }
+      .button, .preset, .case button, .tab, .radius-button { min-height: 44px; }
+      footer { font-size: 11px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+  <link rel="stylesheet" href="../assets/navigation.css">
+  <script defer src="../assets/algorithms.js"></script>
+  <script defer src="../assets/navigation.js"></script>
+</head>
+<body data-algorithm="manacher">
+  <main class="shell" id="manacher-demo">
+    <header class="heading"><h1>马拉车算法 <span>Manacher</span></h1><div class="algorithm-problems" data-algorithm-problems></div></header>
+    <section class="surface input-surface" aria-label="设置演示字符串">
+      <form id="input-form">
+        <div class="input-top">
+          <label class="field" for="string-input">
+            <span class="field-label"><span>原字符串</span><span class="muted small" id="input-count">7 / 24 字符</span></span>
+            <input id="string-input" name="string" value="abacabb" autocomplete="off" spellcheck="false" aria-describedby="input-error input-count">
+          </label>
+          <button type="submit" class="button primary">生成动画</button>
+        </div>
+        <p class="error small" id="input-error" role="alert" hidden></p>
+      </form>
+      <div class="presets" aria-label="示例字符串">
+        <span class="muted small">示例</span>
+        <button class="preset" type="button" data-preset="abacabb" aria-pressed="true">综合 · abacabb</button>
+        <button class="preset" type="button" data-preset="abba" aria-pressed="false">偶数 · abba</button>
+        <button class="preset" type="button" data-preset="abababa" aria-pressed="false">贴边扩展 · abababa</button>
+        <button class="preset" type="button" data-preset="aaaaaaaaaaaa" aria-pressed="false">重复字符 · a × 12</button>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="surface simulation" aria-label="算法逐步动画">
+        <div class="simulation-head">
+          <h2>回文半径的计算</h2>
+          <div class="readouts mono" aria-label="算法变量">
+            <span class="muted">i <code id="value-i">—</code></span>
+            <span class="muted">C <code id="value-c">—</code></span>
+            <span class="muted">R <code id="value-r">—</code></span>
+            <span class="muted">j <code id="value-j">—</code></span>
+          </div>
+        </div>
+        <div class="source-line"><code class="row-name">s</code><div id="original" aria-label="原字符串"></div></div>
+        <div class="array-caption">
+          <span><code>T</code> 为变换串，下方为半径 <code>p</code></span>
+          <span class="scroll-hint" id="scroll-hint" hidden>横向滚动查看完整数组</span>
+        </div>
+        <div class="array-scroll" id="array-scroll" role="region" aria-label="变换串与回文半径，可横向滚动">
+          <div class="array-stage" id="array-stage">
+            <div class="known-range" id="known-range" hidden></div>
+            <div class="range-label" id="known-label" hidden>已知回文</div>
+            <span class="boundary-tag" id="left-boundary" hidden></span>
+            <span class="boundary-tag right" id="right-boundary" hidden></span>
+            <div class="mirror-range" id="mirror-range" hidden></div>
+            <div class="active-range" id="active-range" hidden></div>
+            <div class="center-line" id="center-line" hidden></div>
+            <div class="limit-line" id="left-limit" hidden></div>
+            <div class="limit-line" id="right-limit" hidden></div>
+            <div class="cursor-line" id="cursor-line" hidden></div>
+            <div class="borrow-line" id="borrow-line" hidden></div>
+            <span class="current-radius-label" id="radius-label" hidden></span>
+            <svg class="mirror-svg" id="mirror-svg" aria-label="当前中心与镜像关于 C 对称" role="img" hidden>
+              <path id="mirror-arc"></path>
+              <circle id="mirror-dot-left" r="2.5"></circle>
+              <circle id="mirror-dot-right" r="2.5"></circle>
+            </svg>
+            <div id="array-columns"></div>
+          </div>
+        </div>
+        <div class="legend" aria-label="颜色含义">
+          <span><i class="swatch known" aria-hidden="true"></i>已知回文 [L, R]</span>
+          <span><i class="swatch current" aria-hidden="true"></i>当前中心 i</span>
+          <span><i class="swatch mirror" aria-hidden="true"></i>镜像 j</span>
+        </div>
+        <div class="transport">
+          <div class="play-buttons">
+            <button type="button" class="button" id="previous">上一步</button>
+            <button type="button" class="button primary" id="play">播放</button>
+            <button type="button" class="button" id="next">下一步</button>
+            <button type="button" class="button quiet" id="next-center">下一中心</button>
+            <label class="speed-control" for="speed">速度
+              <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+            </label>
+          </div>
+          <label class="timeline-label" for="timeline"><span id="timeline-phase">预处理</span><span id="timeline-value" class="mono">0 / 0</span></label>
+          <input id="timeline" type="range" min="0" max="1" value="0" step="1" aria-label="动画步骤">
+        </div>
+        <div class="stats" aria-label="当前运行统计">
+          <div><div class="stat-label">实际字符对比较</div><div class="stat-value"><span id="comparison-count">0</span> <span class="small muted">次</span></div></div>
+          <div><div class="stat-label">镜像省去的比较</div><div class="stat-value"><span id="saved-count">0</span> <span class="small muted">次</span></div></div>
+          <div><div class="stat-label">已完成中心</div><div class="stat-value"><span id="finished-count">0</span> <span class="small muted" id="total-centers">/ 15</span></div></div>
+        </div>
+        <div class="best-line"><span class="muted small" id="best-label">当前最长回文</span><span class="mono" id="best-value">—</span><span class="muted small" id="best-length">长度 0</span></div>
+      </section>
+
+      <aside class="surface explanation" aria-label="算法讲解">
+        <div class="tabs" role="tablist" aria-label="讲解主题">
+          <button class="tab" id="tab-steps" role="tab" aria-controls="panel-steps" aria-selected="true" type="button">当前步骤</button>
+          <button class="tab" id="tab-mirror" role="tab" aria-controls="panel-mirror" aria-selected="false" type="button" tabindex="-1">镜像推理</button>
+          <button class="tab" id="tab-cost" role="tab" aria-controls="panel-cost" aria-selected="false" type="button" tabindex="-1">线性时间</button>
+        </div>
+
+        <section id="panel-steps" role="tabpanel" aria-labelledby="tab-steps">
+          <ol class="pipeline" aria-label="每个中心的处理流程">
+            <li data-phase="enter">选中心</li><li data-phase="seed">借半径</li><li data-phase="expand">向外比</li><li data-phase="commit">记边界</li>
+          </ol>
+          <div class="step-content" id="step-content" aria-live="polite" aria-atomic="true">
+            <h2 id="step-title">先统一奇偶两种中心</h2>
+            <p id="step-description"></p>
+            <div class="equation" id="step-equation"></div>
+          </div>
+          <p class="state-note" id="state-note"></p>
+          <details open>
+            <summary>符号与边界约定</summary>
+            <dl class="dictionary">
+              <dt>p[i]</dt><dd>从 i 向一侧延伸的格数。中心本身占 0 格，覆盖 [i−p[i], i+p[i]]。</dd>
+              <dt>C</dt><dd>当前已知、右端最靠右的回文中心。</dd>
+              <dt>R</dt><dd>这个回文的右端下标，包含该位置。左端 L = 2C−R。</dd>
+              <dt>j</dt><dd>i 关于 C 的镜像下标，j = 2C−i。</dd>
+            </dl>
+          </details>
+          <details>
+            <summary>插入分隔符有什么作用</summary>
+            <p><code>aba → ·a·b·a·</code>，中心落在 b。<code>abba → ·a·b·b·a·</code>，中心落在两个 b 之间的 ·。</p>
+            <p>原串的每个字符和每个间隙都有了中心位置，扩展时都比较左右相同距离的两格。浅灰 · 是独立存储的虚拟分隔符。</p>
+          </details>
+          <details>
+            <summary>怎样映射回原字符串</summary>
+            <p>变换串中 [i−p[i], i+p[i]] 对应原串长度 <code>p[i]</code>，起点为 <code>⌊(i−p[i])/2⌋</code>。</p>
+            <p>上方原串的蓝色区域跟随当前半径，底部记录已完成中心中找到的最长回文。长度相同时保留最靠左的一个。</p>
+          </details>
+        </section>
+
+        <section id="panel-mirror" role="tabpanel" aria-labelledby="tab-mirror" hidden>
+          <h2>镜像能借多少</h2>
+          <p class="definition">当 i &lt; R 时，i 和 j 都在以 C 为中心的已知回文内。左右字符对称，让 j 已算出的半径成为 i 的起点。</p>
+          <div class="equation">j = 2C − i
+p[i] = min(p[j], R − i)</div>
+          <div class="case" data-case-panel="inside">
+            <h3>完整落在内部 <button type="button" data-case-jump="inside">定位动画</button></h3>
+            <code>p[j] &lt; R − i</code>
+            <p>镜像回文及其下一对不等字符都在 [L, R] 内。它们一起被映射过来，所以 p[i] 就等于 p[j]。</p>
+          </div>
+          <div class="case" data-case-panel="touch">
+            <h3>恰好到达边界 <button type="button" data-case-jump="touch">定位动画</button></h3>
+            <code>p[j] = R − i</code>
+            <p>已知部分可以完整借用。下一对涉及 R 外的字符，需要实际比较，成功时继续扩展。</p>
+          </div>
+          <div class="case" data-case-panel="clipped">
+            <h3>镜像半径跨过边界 <button type="button" data-case-jump="clipped">定位动画</button></h3>
+            <code>p[j] &gt; R − i</code>
+            <p>先借到 R，得到 p[i] = R−i。统一流程的下一次检查会遇到不相等或越界，半径停在这里。</p>
+          </div>
+          <p id="mirror-live" aria-live="polite"></p>
+          <details>
+            <summary>跨界时为什么会停止</summary>
+            <p>C 的回文已经扩展到最大。如果两端仍有字符，则 T[L−1] 与 T[R+1] 不相等。</p>
+            <p>跨界的镜像回文将 T[L−1] 对应到大回文内部，再关于 C 反射，恰好得到 i 下一对的左字符。因此它与右字符 T[R+1] 不相等。</p>
+          </details>
+        </section>
+
+        <section id="panel-cost" role="tabpanel" aria-labelledby="tab-cost" hidden>
+          <h2>把工作量记在右边界上</h2>
+          <ol class="proof-list">
+            <li>外层从左到右处理 m 个中心，每次借半径只做常数次运算。</li>
+            <li>借用以后，每次成功比较都探到旧 R 右侧的一个新位置。本轮结束时，再把 R 更新到最右端。</li>
+            <li>R 单调右移，成功比较总共至多 m−1 次。每个中心至多有一次失败比较，总共至多 m 次。</li>
+          </ol>
+          <div class="equation">m = 2n + 1
+总字符对比较 &lt; 2m
+时间 O(n) · 空间 O(n)</div>
+          <div class="cost-chart" role="img" id="cost-chart" aria-label="同一变换串两种算法的比较次数">
+            <p class="small">当前输入的完整运行</p>
+            <div class="cost-row"><div class="cost-label"><span>马拉车</span><span class="mono" id="cost-manacher">0 次</span></div><div class="cost-track"><div class="cost-fill" id="bar-manacher"></div></div></div>
+            <div class="cost-row"><div class="cost-label"><span>逐中心从零扩展</span><span class="mono" id="cost-naive">0 次</span></div><div class="cost-track"><div class="cost-fill naive" id="bar-naive"></div></div></div>
+          </div>
+          <p class="cost-summary" id="cost-summary"></p>
+          <div class="cost-preset"><button class="preset" type="button" data-repeat="12">观察 a × 12</button><button class="preset" type="button" data-repeat="24">观察 a × 24</button></div>
+          <details>
+            <summary>比较次数怎样计算</summary>
+            <p>两种算法都在同一个变换串 T 上运行。从半径 0 开始，只有实际执行两格相等性判断才计数。越界检查与中心自身都不计入。</p>
+            <p>动画中的“镜像省去的比较”等于借用半径的累计和。图表展示整串运行总数，左侧计数跟随当前动画步骤。</p>
+          </details>
+        </section>
+      </aside>
+    </div>
+    <footer><span>空格播放 / 暂停 · ← → 逐步 · 点击 p 数值跳转中心</span><span>字符按 Unicode 码点计数 · <a href="https://cp-algorithms.com/string/manacher.html" target="_blank" rel="noreferrer">算法资料</a></span></footer>
+  </main>
+
+  <script>
+    "use strict";
+
+    // null 表示独立的分隔符，避免和用户输入的任意字符混淆。
+    function transformString(text) {
+      const characters = Array.from(text);
+      const transformed = [null];
+      for (const character of characters) transformed.push(character, null);
+      return { characters, transformed };
+    }
+
+    function scanFromZero(transformed) {
+      const radii = [];
+      let comparisons = 0;
+      for (let i = 0; i < transformed.length; i++) {
+        let radius = 0;
+        while (i - radius - 1 >= 0 && i + radius + 1 < transformed.length) {
+          comparisons++;
+          if (transformed[i - radius - 1] !== transformed[i + radius + 1]) break;
+          radius++;
+        }
+        radii.push(radius);
+      }
+      return { radii, comparisons };
+    }
+
+    // 每帧保存独立快照，回退、拖动与播放使用同一条确定的执行轨迹。
+    function buildTrace(text) {
+      const { characters, transformed } = transformString(text);
+      const frames = [];
+      const centerSteps = [];
+      const state = {
+        phase: "intro", i: null, c: null, r: -1, j: null,
+        p: Array(transformed.length).fill(null), seed: 0, caseKind: null,
+        mirrorRadius: null, distance: null, probe: null,
+        comparisons: 0, saved: 0, successful: 0, failed: 0,
+        finished: 0, best: { start: 0, length: 0 }, oldC: null, oldR: -1
+      };
+      function snapshot(phase, detail = {}) {
+        state.phase = phase;
+        frames.push({ ...state, ...detail, p: state.p.slice(), best: { ...state.best } });
+      }
+
+      snapshot("intro");
+      for (let i = 0; i < transformed.length; i++) {
+        Object.assign(state, {
+          i, j: null, seed: 0, caseKind: null, probe: null,
+          mirrorRadius: null, distance: null, oldC: state.c, oldR: state.r
+        });
+        centerSteps.push(frames.length);
+        snapshot("enter");
+
+        if (i < state.r) {
+          state.j = 2 * state.c - i;
+          state.mirrorRadius = state.p[state.j];
+          state.distance = state.r - i;
+          state.caseKind = state.mirrorRadius < state.distance ? "inside"
+            : state.mirrorRadius === state.distance ? "touch" : "clipped";
+          state.seed = Math.min(state.mirrorRadius, state.distance);
+        } else {
+          state.caseKind = "outside";
+        }
+        state.p[i] = state.seed;
+        state.saved += state.seed;
+        snapshot("seed");
+
+        while (true) {
+          const left = i - state.p[i] - 1;
+          const right = i + state.p[i] + 1;
+          state.probe = { left, right };
+          if (left < 0 || right >= transformed.length) {
+            snapshot("boundary");
+            break;
+          }
+          snapshot("compare");
+          state.comparisons++;
+          if (transformed[left] === transformed[right]) {
+            state.p[i]++;
+            state.successful++;
+            snapshot("match");
+          } else {
+            state.failed++;
+            snapshot("mismatch");
+            break;
+          }
+        }
+
+        state.probe = null;
+        const candidate = i + state.p[i];
+        const moved = candidate > state.r;
+        if (moved) {
+          state.c = i;
+          state.r = candidate;
+        }
+        const length = state.p[i];
+        const start = Math.floor((i - length) / 2);
+        if (length > state.best.length || (length === state.best.length && start < state.best.start)) {
+          state.best = { start, length };
+        }
+        state.finished++;
+        state.j = null;
+        snapshot("commit", { moved });
+      }
+      state.i = null;
+      state.caseKind = null;
+      snapshot("done");
+      return { text, characters, transformed, frames, centerSteps, naive: scanFromZero(transformed) };
+    }
+
+    const elements = {};
+    for (const element of document.querySelectorAll("[id]")) elements[element.id] = element;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let model;
+    let frameIndex = 0;
+    let timer = null;
+    let playing = false;
+    let cellWidth = 40;
+    let columns = [];
+    let originalCharacters = [];
+
+    function displayCharacter(character) {
+      if (character === null) return "·";
+      if (character === " ") return "␠";
+      return character;
+    }
+
+    function symbolValue(value) {
+      return value === null || value < 0 ? "—" : String(value);
+    }
+
+    function setText(id, text) {
+      elements[id].textContent = text;
+    }
+
+    function setRange(id, left, right) {
+      const element = elements[id];
+      element.hidden = false;
+      element.style.left = `${left * cellWidth + 1}px`;
+      element.style.width = `${(right - left + 1) * cellWidth - 2}px`;
+    }
+
+    function buildArray() {
+      elements["original"].replaceChildren();
+      originalCharacters = model.characters.map((character) => {
+        const span = document.createElement("span");
+        span.className = "source-char mono";
+        span.textContent = displayCharacter(character);
+        elements["original"].append(span);
+        return span;
+      });
+      if (model.characters.length === 0) {
+        const empty = document.createElement("span");
+        empty.className = "muted small";
+        empty.textContent = "空字符串";
+        elements["original"].append(empty);
+      }
+
+      elements["array-columns"].replaceChildren();
+      columns = model.transformed.map((character, i) => {
+        const column = document.createElement("div");
+        column.className = "array-column mono";
+        const index = document.createElement("span");
+        index.className = "index";
+        index.textContent = i;
+        const tile = document.createElement("span");
+        tile.className = character === null ? "char separator" : "char";
+        tile.textContent = displayCharacter(character);
+        tile.setAttribute("aria-label", `T[${i}]，${character === null ? "分隔符" : character}`);
+        const pointer = document.createElement("span");
+        pointer.className = "pointer-label";
+        const radius = document.createElement("button");
+        radius.type = "button";
+        radius.className = "radius-button unknown mono";
+        radius.addEventListener("click", () => goTo(model.centerSteps[i] + 1));
+        const bar = document.createElement("span");
+        bar.className = "radius-bar";
+        column.append(index, tile, pointer, radius, bar);
+        elements["array-columns"].append(column);
+        return { column, pointer, radius, bar };
+      });
+      resizeArray();
+    }
+
+    function resizeArray() {
+      if (!model) return;
+      const viewportWidth = elements["array-scroll"].clientWidth - 44;
+      const minimumWidth = window.innerWidth <= 480 ? 44 : 34;
+      cellWidth = Math.max(minimumWidth, Math.min(46, Math.floor(viewportWidth / model.transformed.length)));
+      elements["array-stage"].style.width = `${model.transformed.length * cellWidth}px`;
+      columns.forEach(({ column }, i) => {
+        column.style.left = `${i * cellWidth}px`;
+        column.style.width = `${cellWidth}px`;
+      });
+      elements["scroll-hint"].hidden = model.transformed.length * cellWidth <= viewportWidth;
+    }
+
+    function renderGeometry(frame) {
+      const radius = frame.i === null ? null : frame.p[frame.i];
+      const hasRadius = radius !== null;
+      const leftBoundary = frame.c === null ? null : 2 * frame.c - frame.r;
+      const showMirror = frame.j !== null;
+
+      elements["known-range"].hidden = frame.c === null;
+      elements["left-boundary"].hidden = frame.c === null;
+      elements["right-boundary"].hidden = frame.c === null;
+      elements["known-label"].hidden = frame.c === null || frame.r - leftBoundary < 3;
+      elements["center-line"].hidden = frame.c === null;
+      elements["left-limit"].hidden = frame.c === null;
+      elements["right-limit"].hidden = frame.c === null;
+      if (frame.c !== null) {
+        setRange("known-range", leftBoundary, frame.r);
+        elements["known-label"].style.left = `${leftBoundary * cellWidth}px`;
+        elements["known-label"].style.width = `${(frame.r - leftBoundary + 1) * cellWidth}px`;
+        setText("known-label", `已知回文 · C=${frame.c}`);
+        elements["left-boundary"].style.left = `${leftBoundary * cellWidth + 2}px`;
+        elements["right-boundary"].style.left = `${(frame.r + 1) * cellWidth - 2}px`;
+        setText("left-boundary", `L=${leftBoundary}`);
+        setText("right-boundary", frame.r === leftBoundary ? "" : `R=${frame.r}`);
+        elements["center-line"].style.left = `${(frame.c + .5) * cellWidth}px`;
+        elements["left-limit"].style.left = `${leftBoundary * cellWidth}px`;
+        elements["right-limit"].style.left = `${(frame.r + 1) * cellWidth}px`;
+      }
+
+      elements["active-range"].hidden = !hasRadius;
+      elements["borrow-line"].hidden = !hasRadius;
+      elements["radius-label"].hidden = !hasRadius;
+      elements["cursor-line"].hidden = frame.i === null;
+      if (frame.i !== null) {
+        elements["cursor-line"].style.left = `${(frame.i + .5) * cellWidth}px`;
+      }
+      if (hasRadius) {
+        setRange("active-range", frame.i - radius, frame.i + radius);
+        setRange("borrow-line", frame.i - radius, frame.i + radius);
+        const labelWidth = Math.min(150, model.transformed.length * cellWidth);
+        const left = Math.max(0, Math.min((frame.i + .5) * cellWidth - labelWidth / 2, model.transformed.length * cellWidth - labelWidth));
+        elements["radius-label"].style.left = `${left}px`;
+        elements["radius-label"].style.width = `${labelWidth}px`;
+        setText("radius-label", `p[${frame.i}] = ${radius}`);
+      }
+
+      elements["mirror-range"].hidden = !showMirror;
+      elements["mirror-svg"].toggleAttribute("hidden", !showMirror);
+      if (showMirror) {
+        setRange("mirror-range", frame.j - frame.mirrorRadius, frame.j + frame.mirrorRadius);
+        const mirrorX = (frame.j + .5) * cellWidth;
+        const currentX = (frame.i + .5) * cellWidth;
+        const centerX = (frame.c + .5) * cellWidth;
+        elements["mirror-arc"].setAttribute("d", `M ${mirrorX} 91 Q ${centerX} 56 ${currentX} 91`);
+        elements["mirror-dot-left"].setAttribute("cx", mirrorX);
+        elements["mirror-dot-left"].setAttribute("cy", "91");
+        elements["mirror-dot-right"].setAttribute("cx", currentX);
+        elements["mirror-dot-right"].setAttribute("cy", "91");
+      }
+
+      columns.forEach(({ column, pointer, radius: button, bar }, index) => {
+        const isCurrent = index === frame.i;
+        const isMirror = index === frame.j;
+        const isProbe = frame.probe && [frame.probe.left, frame.probe.right].includes(index);
+        const isInCurrent = hasRadius && index >= frame.i - radius && index <= frame.i + radius;
+        column.classList.toggle("is-current", isCurrent);
+        column.classList.toggle("is-mirror", isMirror);
+        column.classList.toggle("in-current", isInCurrent);
+        column.classList.toggle("is-probe", Boolean(isProbe && frame.phase === "compare"));
+        column.classList.toggle("is-match", Boolean(isProbe && frame.phase === "match"));
+        column.classList.toggle("is-mismatch", Boolean(isProbe && frame.phase === "mismatch"));
+        pointer.textContent = isCurrent ? "i" : isMirror ? "j" : "";
+        button.textContent = frame.p[index] === null ? "·" : frame.p[index];
+        button.classList.toggle("unknown", frame.p[index] === null);
+        button.setAttribute("aria-label", `跳到中心 ${index}，半径${frame.p[index] === null ? "待计算" : frame.p[index]}`);
+        bar.style.height = `${frame.p[index] === null ? 0 : frame.p[index] / Math.max(1, model.characters.length) * 20}px`;
+      });
+
+      let selection = frame.best;
+      if (hasRadius) selection = { start: Math.floor((frame.i - radius) / 2), length: radius };
+      originalCharacters.forEach((element, index) => {
+        element.classList.toggle("selected", index >= selection.start && index < selection.start + selection.length);
+      });
+    }
+
+    function describeFrame(frame) {
+      const i = frame.i;
+      const radius = i === null ? null : frame.p[i];
+      if (frame.phase === "intro") {
+        return {
+          title: "先统一奇偶两种中心",
+          description: model.characters.length === 0
+            ? "原串为空，变换串只有一个分隔符，最长回文长度为 0。仍可逐步观察边界检查。"
+            : "在字符两侧和间隙插入 ·，让字符中心与间隙中心都能用同一种方式向外扩展。点击播放，或用下一步慢慢观察。",
+          equation: `原串 n = ${model.characters.length}\n变换串 m = 2n + 1 = ${model.transformed.length}`,
+          note: "上排显示下标，中间显示 T，下排显示 p。· 半径表示该中心尚待计算。"
+        };
+      }
+      if (frame.phase === "enter") {
+        return { title: `选择中心 i = ${i}`, description: "从左到右计算每个中心的最大回文半径。先看 i 与当前右边界 R 的位置关系，决定能否借用镜像。", equation: `i = ${i}\nR = ${symbolValue(frame.r)}`, note: "C 与 R 描述已经完成的中心所发现的最右回文。" };
+      }
+      if (frame.phase === "seed") {
+        if (frame.caseKind === "outside") {
+          return { title: "从半径 0 开始", description: frame.r < 0 ? "还没有已知回文。从当前中心开始，准备检查左右第一对字符。" : `i = ${i} 已到达或越过 R = ${frame.r}。当前已知回文提供的可借半径为 0，从左右相邻位置开始比较。`, equation: `p[${i}] = 0`, note: "这里统一使用 i < R 进入镜像分支。i = R 时可借用的 R−i 也等于 0。" };
+        }
+        const descriptions = {
+          inside: "镜像回文完全位于已知大回文内部，半径可以完整借用。连下一对不等字符也在已知范围内，所以下一次比较会失败。",
+          touch: "镜像半径恰好碰到已知边界，先复制这一段。R 外的情况需要实际比较，这里可能继续变长。",
+          clipped: "镜像半径超过了 i 到 R 的距离，先截到 R。按统一流程检查下一对，随后会因不相等或越界而停止。"
+        };
+        return {
+          title: frame.caseKind === "clipped" ? "借用半径，到边界为止" : "把镜像的已知部分借过来",
+          description: descriptions[frame.caseKind],
+          equation: `j = 2 × ${frame.c} − ${i} = ${frame.j}\np[${i}] = min(${frame.mirrorRadius}, ${frame.distance}) = ${frame.seed}`,
+          note: `紫色范围是镜像的完整回文，蓝色短线是当前已确认的半径。这一步省去 ${frame.seed} 次成功比较。`
+        };
+      }
+      if (["compare", "match", "mismatch", "boundary"].includes(frame.phase)) {
+        const { left, right } = frame.probe;
+        if (frame.phase === "boundary") {
+          return { title: "碰到数组边界，停止扩展", description: `下一对下标为 ${left} 和 ${right}，有效下标范围为 0 到 ${model.transformed.length - 1}。半径已经达到这一中心的最大值。`, equation: `p[${i}] = ${radius}\n覆盖 [${i - radius}, ${i + radius}]`, note: "本步只做越界检查，字符对比较次数保持当前数值。" };
+        }
+        const leftChar = displayCharacter(model.transformed[left]);
+        const rightChar = displayCharacter(model.transformed[right]);
+        const pair = `T[${left}] = ${leftChar}\nT[${right}] = ${rightChar}`;
+        if (frame.phase === "compare") {
+          return { title: "检查已知半径外的下一对", description: "只检查当前半径外一格的两个位置。观察虚线框内的字符，判断这一轮能否扩展。", equation: pair, note: `当前 p[${i}] = ${radius}。判断完成时才计入一次字符对比较。` };
+        }
+        if (frame.phase === "match") {
+          return { title: "两侧相等，半径增加 1", description: "绿色框内两格相等，这一层加入回文。继续向外检查下一对，直至不相等或越界。", equation: `${leftChar} = ${rightChar}\np[${i}] 由 ${radius - 1} → ${radius}`, note: `新右端 ${right} 超过本轮开始时的 R=${symbolValue(frame.oldR)}。本轮结束时统一更新 C、R。` };
+        }
+        return { title: "两侧不相等，半径确定", description: "红色框内两格不相等。当前回文无法继续扩展，保存已经确认的半径。", equation: `${leftChar} ≠ ${rightChar}\np[${i}] = ${radius}`, note: "每个中心至多遇到一次失败的字符对比较。" };
+      }
+      if (frame.phase === "commit") {
+        return {
+          title: frame.moved ? "把右边界向右推进" : "保存半径，完成这个中心",
+          description: frame.moved
+            ? `本轮回文的右端 ${i + radius} 超过旧 R，记录新中心 C 与新右端 R，供后面的中心借用。`
+            : `本轮回文右端 ${i + radius} 位于当前 R = ${frame.r} 之内。半径已保存，继续处理下一个中心。`,
+          equation: frame.moved ? `C 由 ${symbolValue(frame.oldC)} → ${frame.c}\nR 由 ${symbolValue(frame.oldR)} → ${frame.r}` : `p[${i}] = ${radius}\nC = ${frame.c}，R = ${frame.r}`,
+          note: "最长回文按已完成的中心更新。R 只向右移动。"
+        };
+      }
+      const best = model.characters.slice(frame.best.start, frame.best.start + frame.best.length).join("");
+      return { title: "所有中心计算完成", description: frame.best.length > 0 ? `最长回文为“${best}”，在原串中从下标 ${frame.best.start} 开始，长度为 ${frame.best.length}。可以拖动进度条，回看镜像借用和边界推进。` : "原串为空，最长回文长度为 0。", equation: `实际比较 ${frame.comparisons} 次\n镜像省去 ${frame.saved} 次比较`, note: "切换到“镜像推理”定位三种边界情况，或到“线性时间”观察比较次数。" };
+    }
+
+    function render() {
+      const frame = model.frames[frameIndex];
+      const description = describeFrame(frame);
+      renderGeometry(frame);
+      setText("value-i", symbolValue(frame.i));
+      setText("value-c", symbolValue(frame.c));
+      setText("value-r", symbolValue(frame.r));
+      setText("value-j", symbolValue(frame.j));
+      setText("comparison-count", frame.comparisons);
+      setText("saved-count", frame.saved);
+      setText("finished-count", frame.finished);
+      setText("total-centers", `/ ${model.transformed.length}`);
+      setText("step-title", description.title);
+      setText("step-description", description.description);
+      setText("step-equation", description.equation);
+      setText("state-note", description.note);
+      setText("timeline-phase", description.title);
+      setText("timeline-value", `${frameIndex + 1} / ${model.frames.length}`);
+      elements["timeline"].max = model.frames.length - 1;
+      elements["timeline"].value = frameIndex;
+      elements["timeline"].setAttribute("aria-valuetext", `第 ${frameIndex + 1} 步，共 ${model.frames.length} 步，${description.title}`);
+      elements["previous"].disabled = frameIndex === 0;
+      elements["next"].disabled = frameIndex === model.frames.length - 1;
+      elements["next-center"].disabled = !model.centerSteps.some((index) => index > frameIndex);
+      setText("play", playing ? "暂停" : frameIndex === model.frames.length - 1 ? "重新播放" : "播放");
+      elements["play"].setAttribute("aria-pressed", String(playing));
+      const phase = ["compare", "match", "mismatch", "boundary"].includes(frame.phase) ? "expand" : frame.phase;
+      for (const item of document.querySelectorAll("[data-phase]")) {
+        if (item.dataset.phase === phase) item.setAttribute("aria-current", "step");
+        else item.removeAttribute("aria-current");
+      }
+      const bestText = model.characters.slice(frame.best.start, frame.best.start + frame.best.length).join("");
+      setText("best-label", frame.phase === "done" ? "最长回文" : "当前最长回文");
+      setText("best-value", frame.best.length ? bestText : frame.phase === "done" ? "空串" : "—");
+      setText("best-length", `长度 ${frame.best.length}`);
+
+      for (const panel of document.querySelectorAll("[data-case-panel]")) {
+        panel.classList.toggle("active", frame.j !== null && panel.dataset.casePanel === frame.caseKind);
+      }
+      setText("mirror-live", frame.j !== null
+        ? `当前 j=${frame.j}，p[j]=${frame.mirrorRadius}，R−i=${frame.distance}，借用 ${frame.seed} 格。`
+        : "点击任意“定位动画”，直接观察对应的借用步骤。示例会同时更新到输入框。");
+    }
+
+    function updateCostChart() {
+      const final = model.frames.at(-1);
+      const maximum = Math.max(1, model.naive.comparisons, final.comparisons);
+      setText("cost-manacher", `${final.comparisons} 次`);
+      setText("cost-naive", `${model.naive.comparisons} 次`);
+      elements["bar-manacher"].style.width = `${final.comparisons / maximum * 100}%`;
+      elements["bar-naive"].style.width = `${model.naive.comparisons / maximum * 100}%`;
+      setText("cost-summary", `m=${model.transformed.length}。马拉车成功比较 ${final.successful} 次，失败比较 ${final.failed} 次，借用省去 ${final.saved} 次比较。`);
+      elements["cost-chart"].setAttribute("aria-label", `整串运行，马拉车比较 ${final.comparisons} 次，逐中心从零扩展比较 ${model.naive.comparisons} 次`);
+    }
+
+    function stopPlayback() {
+      clearTimeout(timer);
+      timer = null;
+      playing = false;
+    }
+
+    function ensureCurrentVisible() {
+      const frame = model.frames[frameIndex];
+      if (frame.i === null) return;
+      const viewport = elements["array-scroll"];
+      const x = 22 + (frame.i + .5) * cellWidth;
+      const margin = Math.min(80, viewport.clientWidth / 4);
+      if (x < viewport.scrollLeft + margin || x > viewport.scrollLeft + viewport.clientWidth - margin) {
+        viewport.scrollTo({ left: Math.max(0, x - viewport.clientWidth / 2), behavior: reducedMotion.matches ? "instant" : "smooth" });
+      }
+    }
+
+    function goTo(index) {
+      stopPlayback();
+      frameIndex = Math.max(0, Math.min(model.frames.length - 1, index));
+      render();
+      ensureCurrentVisible();
+    }
+
+    function scheduleFrame() {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (!playing) return;
+        frameIndex++;
+        if (frameIndex >= model.frames.length - 1) {
+          frameIndex = model.frames.length - 1;
+          stopPlayback();
+        }
+        render();
+        ensureCurrentVisible();
+        if (playing) scheduleFrame();
+      }, 950 / Number(elements["speed"].value));
+    }
+
+    function togglePlayback() {
+      if (playing) stopPlayback();
+      else {
+        if (frameIndex === model.frames.length - 1) frameIndex = 0;
+        playing = true;
+        scheduleFrame();
+      }
+      render();
+    }
+
+    function setInput(text) {
+      stopPlayback();
+      model = buildTrace(text);
+      frameIndex = 0;
+      elements["string-input"].value = text;
+      elements["string-input"].removeAttribute("aria-invalid");
+      elements["input-error"].hidden = true;
+      setText("input-count", `${Array.from(text).length} / 24 字符`);
+      document.querySelectorAll("[data-preset]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.preset === text));
+      });
+      buildArray();
+      elements["array-scroll"].scrollLeft = 0;
+      updateCostChart();
+      render();
+    }
+
+    function selectTab(name) {
+      for (const tab of document.querySelectorAll(".tab")) {
+        const selected = tab.id === `tab-${name}`;
+        tab.setAttribute("aria-selected", String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        elements[tab.getAttribute("aria-controls")].hidden = !selected;
+      }
+    }
+
+    function jumpToCase(kind) {
+      stopPlayback();
+      // 选取有实际借用量的内部案例，以及贴边后仍能扩展的案例。
+      const isDesiredFrame = (frame, index, frames) => frame.phase === "seed"
+        && frame.caseKind === kind
+        && (kind !== "inside" || frame.seed > 0)
+        && (kind !== "touch" || frames[index + 2]?.phase === "match");
+      let target = model.frames.findIndex(isDesiredFrame);
+      if (target < 0) {
+        setInput(kind === "touch" ? "abababa" : "abacabb");
+        target = model.frames.findIndex(isDesiredFrame);
+      }
+      selectTab("mirror");
+      goTo(target);
+    }
+
+    elements["input-form"].addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = elements["string-input"].value;
+      if (Array.from(text).length > 24) {
+        setText("input-error", "动画最多展示 24 个字符，请缩短输入后重新生成。");
+        elements["input-error"].hidden = false;
+        elements["string-input"].setAttribute("aria-invalid", "true");
+        return;
+      }
+      setInput(text);
+    });
+    elements["string-input"].addEventListener("input", () => {
+      setText("input-count", `${Array.from(elements["string-input"].value).length} / 24 字符`);
+      elements["input-error"].hidden = true;
+      elements["string-input"].removeAttribute("aria-invalid");
+    });
+    elements["previous"].addEventListener("click", () => goTo(frameIndex - 1));
+    elements["next"].addEventListener("click", () => goTo(frameIndex + 1));
+    elements["play"].addEventListener("click", togglePlayback);
+    elements["next-center"].addEventListener("click", () => {
+      const next = model.centerSteps.find((index) => index > frameIndex);
+      if (next !== undefined) goTo(next);
+    });
+    elements["timeline"].addEventListener("input", () => goTo(Number(elements["timeline"].value)));
+    elements["speed"].addEventListener("change", () => { if (playing) scheduleFrame(); });
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => setInput(button.dataset.preset));
+    });
+    document.querySelectorAll("[data-repeat]").forEach((button) => {
+      button.addEventListener("click", () => {
+        setInput("a".repeat(Number(button.dataset.repeat)));
+        goTo(model.frames.length - 1);
+        selectTab("cost");
+      });
+    });
+    document.querySelectorAll("[data-case-jump]").forEach((button) => {
+      button.addEventListener("click", () => jumpToCase(button.dataset.caseJump));
+    });
+    const tabNames = ["steps", "mirror", "cost"];
+    for (const name of tabNames) {
+      elements[`tab-${name}`].addEventListener("click", () => selectTab(name));
+      elements[`tab-${name}`].addEventListener("keydown", (event) => {
+        let target;
+        if (event.key === "ArrowRight") target = tabNames[(tabNames.indexOf(name) + 1) % tabNames.length];
+        if (event.key === "ArrowLeft") target = tabNames[(tabNames.indexOf(name) + tabNames.length - 1) % tabNames.length];
+        if (event.key === "Home") target = tabNames[0];
+        if (event.key === "End") target = tabNames.at(-1);
+        if (target) {
+          event.preventDefault();
+          selectTab(target);
+          elements[`tab-${target}`].focus();
+        }
+      });
+    }
+    document.addEventListener("keydown", (event) => {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.target.closest("input, select, textarea, button, summary, a, [contenteditable]")) return;
+      if (event.code === "Space") { event.preventDefault(); togglePlayback(); }
+      if (event.key === "ArrowRight") { event.preventDefault(); goTo(frameIndex + 1); }
+      if (event.key === "ArrowLeft") { event.preventDefault(); goTo(frameIndex - 1); }
+    });
+    window.addEventListener("resize", () => { resizeArray(); render(); ensureCurrentVisible(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && playing) { stopPlayback(); render(); }
+    });
+    setInput("abacabb");
+  </script>
+</body>
+</html>
