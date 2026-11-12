@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>盛最多水的容器 · 双指针动画</title>
+  <link rel="stylesheet" href="../assets/base.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../assets/navigation.css">
+  <script defer src="../assets/algorithms.js"></script>
+  <script defer src="trace.js"></script>
+  <script defer src="script.js"></script>
+  <script defer src="../assets/navigation.js"></script>
+</head>
+<body data-algorithm="container-with-most-water">
+  <main class="shell">
+    <header class="heading"><h1>双指针盛水</h1><div class="algorithm-problems" data-algorithm-problems></div></header>
+
+    <section class="surface input-surface" aria-label="设置柱子高度">
+      <form id="heights-form">
+        <div class="input-grid">
+          <label class="field" for="heights"><span class="field-label">高度数组 · height</span><input id="heights" value="1, 8, 6, 2, 5, 4, 8, 3, 7" autocomplete="off" spellcheck="false" aria-describedby="input-help input-error"></label>
+          <button class="button primary" type="submit">生成动画</button>
+        </div>
+        <p class="small muted input-help" id="input-help">逗号或空格分隔，可带方括号；展示 2–24 个整数，高度范围 0–10000。</p>
+        <p class="error small" id="input-error" role="alert" hidden></p>
+      </form>
+      <div class="presets" aria-label="示例高度">
+        <span class="small muted">示例</span>
+        <button class="preset" type="button" data-example="classic" aria-pressed="true">经典示例</button>
+        <button class="preset" type="button" data-example="increasing" aria-pressed="false">单调递增</button>
+        <button class="preset" type="button" data-example="equal" aria-pressed="false">两端等高</button>
+        <button class="preset" type="button" data-example="zeros" aria-pressed="false">零高度</button>
+        <button class="preset" type="button" data-example="pair" aria-pressed="false">只有两根</button>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="surface simulation" aria-label="双指针盛水动画">
+        <div class="simulation-head"><h2 id="diagram-title">从最宽的容器开始</h2><span class="small muted" id="round-label"></span></div>
+        <div class="readouts mono" aria-label="当前容器的端点与高度">
+          <span>L <strong id="value-l"></strong></span><span>R <strong id="value-r"></strong></span>
+          <span>h[L] <strong id="height-l"></strong></span><span>h[R] <strong id="height-r"></strong></span>
+        </div>
+        <div class="chart-caption small muted"><span>下标距离是宽度，短边决定水位</span><span id="scroll-hint" hidden>横向滚动查看完整数组</span></div>
+        <div class="chart-viewport" id="chart-viewport" tabindex="0" role="region" aria-label="可横向滚动的容器示意图">
+          <div class="chart-stage" id="chart-stage" role="img" aria-label="高度数组与当前容器">
+            <div class="grid-lines" id="grid-lines" aria-hidden="true"></div>
+            <div class="water" id="water" aria-hidden="true"></div>
+            <div class="trial-water" id="trial-water" aria-hidden="true" hidden></div>
+            <div class="columns" id="columns" aria-hidden="true"></div>
+            <div class="baseline" aria-hidden="true"></div>
+            <span class="pointer pointer-left mono" id="pointer-left" aria-hidden="true">L</span>
+            <span class="pointer pointer-right mono" id="pointer-right" aria-hidden="true">R</span>
+            <div class="width-guide mono" id="width-guide" aria-hidden="true"><span id="width-text"></span></div>
+          </div>
+        </div>
+        <div class="area-equation mono" id="area-equation" aria-live="off"></div>
+        <p class="trial-caption small" id="trial-caption" hidden></p>
+        <div class="legend small muted"><span><i class="swatch water-swatch" aria-hidden="true"></i>当前水量</span><span><i class="swatch short-swatch" aria-hidden="true"></i>将移动的短边</span><span><i class="swatch excluded-swatch" aria-hidden="true"></i>已排除端点</span></div>
+
+        <div class="transport">
+          <div class="play-buttons">
+            <button class="button" id="previous" type="button">上一步</button><button class="button primary" id="play" type="button">播放</button>
+            <button class="button" id="next" type="button">下一步</button><button class="button quiet" id="next-round" type="button">下一轮</button>
+            <label class="speed-control" for="speed">速度<select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+          </div>
+          <label class="timeline-label small muted" for="timeline"><span id="timeline-phase"></span><span class="mono" id="timeline-value"></span></label>
+          <input id="timeline" type="range" min="0" max="1" value="0" step="1" aria-label="动画步骤">
+        </div>
+        <div class="result-line"><span class="small muted" id="best-label">已记录的最大容量</span><strong class="mono" id="best-value">—</strong><span class="small muted mono" id="best-pair"></span><button class="preset" id="jump-best" type="button" disabled>回看最优</button></div>
+      </section>
+
+      <aside class="surface explanation" aria-label="双指针讲解">
+        <div class="tabs" role="tablist" aria-label="讲解主题">
+          <button class="tab" id="tab-steps" type="button" role="tab" aria-controls="panel-steps" aria-selected="true">当前步骤</button>
+          <button class="tab" id="tab-proof" type="button" role="tab" aria-controls="panel-proof" aria-selected="false" tabindex="-1">为何移短边</button>
+        </div>
+        <section id="panel-steps" role="tabpanel" aria-labelledby="tab-steps" tabindex="0">
+          <ol class="pipeline" aria-label="每轮流程"><li data-phase="measure">算水量</li><li data-phase="record">记最大</li><li data-phase="discard">移短边</li></ol>
+          <div class="step-content" aria-live="polite" aria-atomic="true"><h2 id="step-title"></h2><p id="step-description"></p><div class="equation" id="step-equation"></div></div>
+          <dl class="dimensions"><div><dt>宽度 R − L</dt><dd class="mono" id="width-value"></dd></div><div><dt>水位 min(h[L], h[R])</dt><dd class="mono" id="level-value"></dd></div><div><dt>本轮容量</dt><dd class="mono" id="area-value"></dd></div></dl>
+          <details open><summary>已完成的轮次 <span class="mono" id="history-count">0</span></summary><p class="small muted history-help">点击一行，回到该轮的水量计算。</p><div class="history-scroll"><table class="history" aria-label="每轮容器容量"><thead><tr><th>轮</th><th>[L, R]</th><th>容量</th><th>最大值</th></tr></thead><tbody id="history-body"></tbody></table><p class="small muted" id="history-empty">计算并记录后，轮次会出现在这里。</p></div></details>
+        </section>
+        <section id="panel-proof" role="tabpanel" aria-labelledby="tab-proof" tabindex="0" hidden>
+          <h2>保留短边，水位就有上限</h2>
+          <p>先记录当前容量。假设左边更短，保留 L，把右端换成任意内侧位置 k，水位都不会超过 h[L]，宽度还会减小。</p>
+          <div class="equation">L &lt; k &lt; R，且 h[L] ≤ h[R]<br>A(L, k) ≤ h[L] × (k − L)<br>        ≤ h[L] × (R − L) = 当前容量</div>
+          <p>所以，以 L 为端点、右端在当前区间内的其他容器，都不可能超过已记录的容量。可以安全排除 L，令 L 向右移动。右边更短时同理。</p>
+          <div class="proof-current"><h3>代入当前容器</h3><div class="equation" id="proof-equation"></div><label class="trial-control"><input id="show-trial" type="checkbox">在图中对比只移动高边</label><p class="small muted" id="trial-description"></p></div>
+          <details open><summary>两边一样高呢？</summary><p>固定任意一边，向内移动另一边，容量都不会更大。记录当前容量后，任意移动一边都安全；本动画约定移动左边。高度为 0 时，上面的不等式仍然成立。</p></details>
+          <details open><summary>为什么不会漏掉答案？</summary><p>每轮只排除一个端点；与它有关、仍未检查的容器，容量都不超过当前已记录的最大值。更好的答案如果存在，就仍在剩下的区间里。</p><p id="complexity-summary"></p><p>算法额外空间为 <code>O(1)</code>。动画保存播放记录，方便回退查看。</p></details>
+        </section>
+      </aside>
+    </div>
+    <footer><span>空格播放 / 暂停 · ← → 逐步 · Home / End 首尾</span><span>容量 = 宽度 × 短边高度</span></footer>
+  </main>
+</body>
+</html>

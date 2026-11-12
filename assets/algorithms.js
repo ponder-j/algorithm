@@ -31,5 +31,21 @@ window.algorithmCatalog = [
         url: "https://leetcode.cn/problems/median-of-two-sorted-arrays/description/"
       }
     ]
+  },
+  {
+    id: "container-with-most-water",
+    name: "双指针盛水",
+    path: "container-with-most-water/index.html",
+    preview: {
+      src: "assets/previews/container-with-most-water.png",
+      alt: "双指针盛水动画中的左右端点、短边水位与容器宽度"
+    },
+    problems: [
+      {
+        number: 11,
+        title: "盛最多水的容器",
+        url: "https://leetcode.cn/problems/container-with-most-water/description/"
+      }
+    ]
   }
 ];

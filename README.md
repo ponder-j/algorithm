@@ -4,6 +4,11 @@
 
 - 马拉车动画对应 LeetCode 5「最长回文子串」，提供逐步播放、镜像推理与比较次数对照。
 - 二分划分动画对应 LeetCode 4「寻找两个正序数组的中位数」，展示合法切分区间、两个挡板的联动与交叉比较。每个数组最多展示 12 个元素。[在线浏览](https://ponder-j.github.io/algorithm/median-of-two-sorted-arrays/)
+- 双指针盛水动画对应 LeetCode 11「盛最多水的容器」，展示宽度、短边水位、最大容量与逐轮排除过程，支持叠加对比只移动高边的结果。可自定义 2–24 个高度。[在线浏览](https://ponder-j.github.io/algorithm/container-with-most-water/)
+
+## 检查动画模型
+
+运行 `node --test container-with-most-water/trace.test.cjs`，检查容量结果、排除端点的正确性和输入边界。
 
 ## 本地浏览
 
