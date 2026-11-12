@@ -11,5 +11,17 @@ window.algorithmCatalog = [
         url: "https://leetcode.cn/problems/longest-palindromic-substring/description/"
       }
     ]
+  },
+  {
+    id: "median-of-two-sorted-arrays",
+    name: "二分划分求中位数",
+    path: "median-of-two-sorted-arrays/index.html",
+    problems: [
+      {
+        number: 4,
+        title: "寻找两个正序数组的中位数",
+        url: "https://leetcode.cn/problems/median-of-two-sorted-arrays/description/"
+      }
+    ]
   }
 ];

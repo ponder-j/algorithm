@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>双数组中位数 · 二分划分动画</title>
+  <link rel="stylesheet" href="../assets/base.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../assets/navigation.css">
+  <script defer src="../assets/algorithms.js"></script>
+  <script defer src="script.js"></script>
+  <script defer src="../assets/navigation.js"></script>
+</head>
+<body data-algorithm="median-of-two-sorted-arrays">
+  <main class="shell" id="median-demo">
+    <header class="heading"><h1>二分划分求中位数</h1><div class="algorithm-problems" data-algorithm-problems></div></header>
+    <section class="surface input-surface" aria-label="设置两个有序数组">
+      <form id="arrays-form">
+        <div class="input-grid">
+          <label class="field" for="array-a"><span class="field-label">数组 A · nums1</span><input id="array-a" autocomplete="off" spellcheck="false" aria-describedby="input-help input-error"></label>
+          <label class="field" for="array-b"><span class="field-label">数组 B · nums2</span><input id="array-b" autocomplete="off" spellcheck="false" aria-describedby="input-help input-error"></label>
+          <button class="button primary" type="submit">生成动画</button>
+        </div>
+        <p class="input-help small muted" id="input-help">逗号或空格分隔，每组最多 12 个整数，按从小到大排列。空数组可以留空。</p>
+        <p class="error small" id="input-error" role="alert" hidden></p>
+      </form>
+      <div class="presets" aria-label="示例数组">
+        <span class="muted small">示例</span>
+        <button class="preset" data-example="directions" type="button" aria-pressed="true">左右收缩</button>
+        <button class="preset" data-example="odd" type="button" aria-pressed="false">奇数总长</button>
+        <button class="preset" data-example="restricted" type="button" aria-pressed="false">受限的初始区间</button>
+        <button class="preset" data-example="empty" type="button" aria-pressed="false">空数组与哨兵</button>
+        <button class="preset" data-example="duplicates" type="button" aria-pressed="false">重复值</button>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="surface simulation" aria-label="二分划分动画">
+        <div class="simulation-head"><h2>两个挡板，一起移动</h2><span class="small muted" id="size-label"></span></div>
+        <div class="readouts mono" aria-label="当前变量">
+          <span>l <strong id="value-l">0</strong></span><span>r <strong id="value-r">0</strong></span>
+          <span>i <strong id="value-i">—</strong></span><span>j <strong id="value-j">—</strong></span>
+          <span>mid <strong id="value-mid">0</strong></span>
+          <span class="round" id="round-label">准备开始</span>
+        </div>
+        <div class="diagram-caption small muted"><span>上排数字是 A 的切分位置，表示左侧元素个数</span><span id="scroll-hint" hidden>横向滚动查看完整数组</span></div>
+        <div class="arrays-viewport" id="arrays-viewport" role="region" aria-label="可横向滚动的两个数组与挡板">
+          <div class="arrays-stage" id="arrays-stage">
+            <span class="axis-label small muted">可选 i</span>
+            <div class="allowed-range" id="allowed-range"></div>
+            <div id="gap-positions"></div>
+            <span class="array-name name-a mono">A</span><span class="array-name name-b mono">B</span>
+            <div id="cells-a"></div><div id="cells-b"></div>
+            <span class="sentinel mono" id="a-minus" hidden>−∞</span><span class="sentinel mono" id="a-plus" hidden>+∞</span>
+            <span class="sentinel mono" id="b-minus" hidden>−∞</span><span class="sentinel mono" id="b-plus" hidden>+∞</span>
+            <div class="cut cut-a" id="cut-a" hidden></div><div class="cut cut-b" id="cut-b" hidden></div>
+            <span class="cut-label cut-label-a mono" id="label-i" hidden></span><span class="cut-label cut-label-b mono" id="label-j" hidden></span>
+            <svg id="cross-comparisons" class="cross-comparisons" role="img" aria-label="A 左端与 B 右端、B 左端与 A 右端的两条交叉比较" hidden>
+              <path id="comparison-a"></path><path id="comparison-b"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="partition-summary mono small" id="partition-summary">先确定 i 的可行区间</div>
+        <div class="legend small muted"><span><i class="swatch left" aria-hidden="true"></i>划分后的左半部分</span><span><i class="swatch right" aria-hidden="true"></i>划分后的右半部分</span><span><i class="swatch cut-color" aria-hidden="true"></i>挡板 i / j</span></div>
+        <div class="transport">
+          <div class="play-buttons">
+            <button class="button" id="previous" type="button">上一步</button><button class="button primary" id="play" type="button">播放</button>
+            <button class="button" id="next" type="button">下一步</button><button class="button quiet" id="next-round" type="button">下一轮</button>
+            <label class="speed-control" for="speed">速度<select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+          </div>
+          <label class="timeline-label small muted" for="timeline"><span id="timeline-phase"></span><span class="mono" id="timeline-value"></span></label>
+          <input id="timeline" type="range" min="0" max="1" value="0" step="1" aria-label="动画步骤">
+        </div>
+        <div class="result-line"><span class="muted small">中位数</span><strong class="mono" id="median-value">待确定</strong><span class="small muted mono" id="median-formula"></span></div>
+      </section>
+
+      <aside class="surface explanation" aria-label="二分划分讲解">
+        <div class="tabs" role="tablist" aria-label="讲解主题">
+          <button class="tab" id="tab-steps" type="button" role="tab" aria-controls="panel-steps" aria-selected="true">当前步骤</button>
+          <button class="tab" id="tab-proof" type="button" role="tab" aria-controls="panel-proof" aria-selected="false" tabindex="-1">为何二分</button>
+          <button class="tab" id="tab-rust" type="button" role="tab" aria-controls="panel-rust" aria-selected="false" tabindex="-1">Rust 对照</button>
+        </div>
+        <section id="panel-steps" role="tabpanel" aria-labelledby="tab-steps">
+          <ol class="pipeline" aria-label="算法流程"><li data-phase="bounds">定区间</li><li data-phase="partition">放挡板</li><li data-phase="compare">验边界</li><li data-phase="result">取结果</li></ol>
+          <div class="step-content" aria-live="polite" aria-atomic="true"><h2 id="step-title"></h2><p id="step-description"></p><div class="equation" id="step-equation"></div></div>
+          <table class="boundaries" aria-label="挡板两侧的四个边界值"><thead><tr><th></th><th>左侧最大</th><th>右侧最小</th></tr></thead><tbody>
+            <tr><th>A</th><td><code>a_left</code><span id="a-left-value" class="mono">—</span></td><td><code>a_right</code><span id="a-right-value" class="mono">—</span></td></tr>
+            <tr><th>B</th><td><code>b_left</code><span id="b-left-value" class="mono">—</span></td><td><code>b_right</code><span id="b-right-value" class="mono">—</span></td></tr>
+          </tbody></table>
+          <div class="checks" aria-label="两条交叉比较"><div id="check-a"><code>a_left ≤ b_right</code><span id="check-a-status">待检查</span></div><div id="check-b"><code>b_left ≤ a_right</code><span id="check-b-status">待检查</span></div></div>
+          <details><summary>i、j 和 mid 表示什么</summary><p>i 是 A 挡板左侧的元素个数，j 是 B 挡板左侧的元素个数。两者相加始终为 <code>mid = ⌈(m+n)/2⌉</code>。</p><p>总长度为偶数时两半等长，为奇数时左半部分多一个元素。移动 i 后，用 <code>j = mid−i</code> 同步移动另一个挡板。</p></details>
+        </section>
+        <section id="panel-proof" role="tabpanel" aria-labelledby="tab-proof" hidden>
+          <h2>方向来自数组有序</h2>
+          <p class="definition">每个数组内部，挡板左边的元素都小于等于右边。再满足两条交叉比较，就能保证合起来的左半部分小于等于整个右半部分。</p>
+          <div class="proof-case"><h3>a_left &gt; b_right</h3><p>A 左边放进了过大的元素。i 增大时，a_left 会增大或持平，j 会减小，使 b_right 减小或持平。因此 i 及其右边的位置都可排除。</p><div class="equation">r = i − 1</div><button class="preset" type="button" data-jump="left">定位左移</button></div>
+          <div class="proof-case"><h3>b_left &gt; a_right</h3><p>B 左边的最大值超过了 A 右边的最小值。i 减小时，a_right 会减小或持平，j 会增大，使 b_left 增大或持平。因此 i 及其左边的位置都可排除。</p><div class="equation">l = i + 1</div><button class="preset" type="button" data-jump="right">定位右移</button></div>
+          <details open><summary>区间大小与复杂度</summary><p id="complexity-summary"></p><p>每次缩区间都排除中点及一侧的候选位置。迭代数为 <code>O(log(K+1))</code>，算法维护挡板、边界值等固定个变量，额外空间为 <code>O(1)</code>。</p></details>
+        </section>
+        <section id="panel-rust" role="tabpanel" aria-labelledby="tab-rust" hidden>
+          <h2>对应你写的 Rust</h2>
+          <div class="rust-item"><code>let mid = (m + n).div_ceil(2);</code><p><code>div_ceil</code> 把除法结果向上取整。例如总长 5 时 mid = 3，左边容纳 3 个元素。</p></div>
+          <div class="rust-item"><code>let mut l = mid.saturating_sub(n);<br>let mut r = m.min(mid);</code><p>由 <code>0 ≤ i ≤ m</code> 和 <code>0 ≤ mid−i ≤ n</code>，得到 <code>max(0, mid−n) ≤ i ≤ min(m, mid)</code>。</p><p><code>saturating_sub</code> 在结果应小于 0 时返回 0，适合这里的无符号长度。<button class="preset" type="button" id="show-restricted">观察受限区间</button></p></div>
+          <div class="rust-item"><code>let mut i = (l + r) / 2;<br>let mut j = mid - i;</code><p>整数除法向下取整来选中点。i、j 都计数挡板左边的元素个数，位置 0 与数组长度都是合法挡板。</p></div>
+          <div class="rust-item"><code>i32::MIN / i32::MAX</code><p>你的代码用两个极值代表空侧。动画显示为 −∞ 与 +∞。演示数值采用题目范围 [−10⁶, 10⁶]，让空侧始终自然满足对应比较。</p></div>
+        </section>
+      </aside>
+    </div>
+    <footer><span>空格播放 / 暂停 · ← → 逐步 · 默认示例展示两种移动方向</span><span>按你的 Rust 挡板二分思路推演 · <a href="https://leetcode.cn/problems/median-of-two-sorted-arrays/description/" target="_blank" rel="noreferrer">题目原文</a></span></footer>
+  </main>
+</body>
+</html>

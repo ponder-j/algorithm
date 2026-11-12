@@ -2,7 +2,8 @@
 
 [在线浏览](https://ponder-j.github.io/algorithm/) · [马拉车算法](https://ponder-j.github.io/algorithm/manacher/)
 
-马拉车动画对应 LeetCode 5「最长回文子串」，提供逐步播放、镜像推理与比较次数对照。
+- 马拉车动画对应 LeetCode 5「最长回文子串」，提供逐步播放、镜像推理与比较次数对照。
+- 二分划分动画对应 LeetCode 4「寻找两个正序数组的中位数」，展示合法切分区间、两个挡板的联动与交叉比较。每个数组最多展示 12 个元素。[在线浏览](https://ponder-j.github.io/algorithm/median-of-two-sorted-arrays/)
 
 ## 本地浏览
 
@@ -15,6 +16,7 @@
 3. 在新页面的 `<head>` 中引入公共资源。
 
 ```html
+<link rel="stylesheet" href="../assets/base.css">
 <link rel="stylesheet" href="../assets/navigation.css">
 <script defer src="../assets/algorithms.js"></script>
 <script defer src="../assets/navigation.js"></script>
