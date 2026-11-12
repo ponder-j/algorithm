@@ -124,7 +124,6 @@ function buildDiagram() {
     elements["gap-positions"].append(span);
     return span;
   });
-  resizeDiagram();
 }
 
 function resizeDiagram() {
@@ -144,6 +143,16 @@ function resizeDiagram() {
   }
   gaps.forEach((gap, index) => { gap.style.left = `${leftPadding + index * cellWidth - 16}px`; });
   elements["scroll-hint"].hidden = width <= available;
+}
+
+function refreshLayout() {
+  const stage = elements["arrays-stage"];
+  stage.classList.add("is-resetting");
+  resizeDiagram();
+  render();
+  // 新输入或容器尺寸先直接完成布局，逐步播放时再启用挡板移动动画。
+  void stage.offsetWidth;
+  stage.classList.remove("is-resetting");
 }
 
 function markBoundary(element, pass, checked) {
@@ -365,7 +374,7 @@ function loadArrays(a, b) {
   setText("complexity-summary", `本例初始有 K = ${model.initialChoices} 个候选位置，K ≤ min(m,n)+1 = ${Math.min(model.m, model.n) + 1}。最多进行 ${Math.ceil(Math.log2(model.initialChoices + 1))} 轮二分。`);
   buildDiagram();
   elements["arrays-viewport"].scrollLeft = 0;
-  render();
+  refreshLayout();
 }
 
 function selectTab(name) {
@@ -436,6 +445,6 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight") { event.preventDefault(); goTo(frameIndex + 1); }
   if (event.key === "ArrowLeft") { event.preventDefault(); goTo(frameIndex - 1); }
 });
-window.addEventListener("resize", () => { resizeDiagram(); render(); ensureCutsVisible(); });
+window.addEventListener("resize", () => { refreshLayout(); ensureCutsVisible(); });
 document.addEventListener("visibilitychange", () => { if (document.hidden && playing) { stopPlayback(); render(); } });
 loadArrays(examples.directions.a, examples.directions.b);

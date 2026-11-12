@@ -11,8 +11,9 @@
 #scroll-hint { font-size: 11px; }
 .arrays-viewport { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; overscroll-behavior-x: contain; padding: 0 18px; }
 .arrays-stage { position: relative; height: 357px; margin: 0 auto; isolation: isolate; }
+.arrays-stage.is-resetting * { transition: none !important; }
 .axis-label { position: absolute; left: 4px; top: 16px; font-size: 11px; }
-.allowed-range { position: absolute; top: 13px; height: 29px; background: var(--blue-soft); border-radius: 5px; transition: left .38s, width .38s; z-index: -1; }
+.allowed-range { position: absolute; top: 13px; height: 29px; background: var(--blue-soft); border-radius: 5px; transition: left .24s, width .24s; z-index: -1; }
 .gap-position { position: absolute; top: 13px; width: 32px; text-align: center; padding: 3px 0; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); border-radius: 4px; }
 .gap-position.excluded { opacity: .45; }
 .gap-position.selected { background: var(--orange-soft); color: var(--orange); font-weight: 600; opacity: 1; }
@@ -24,12 +25,12 @@
 .array-cell.boundary { border-bottom: 3px solid var(--orange); }
 .array-cell.pass, .sentinel.pass { border: 2px solid var(--green); }
 .array-cell.fail, .sentinel.fail { border: 2px solid var(--red); background: var(--red-soft); color: var(--red); }
-.array-cell.median { background: var(--blue); color: var(--surface); border-color: var(--blue); }
+.array-cell.median { background: var(--blue); color: var(--surface); border-color: var(--blue); transition: none; }
 .sentinel { position: absolute; width: 44px; height: 34px; display: flex; justify-content: center; align-items: center; border: 1px dashed var(--line); border-radius: 5px; color: var(--muted); background: var(--surface); font-size: 14px; }
-.cut { position: absolute; width: 2px; height: 68px; background: var(--orange); transition: left .38s; }
+.cut { position: absolute; width: 2px; height: 68px; background: var(--orange); transition: left .24s; }
 .cut-a { top: 96px; }
 .cut-b { top: 250px; }
-.cut-label { position: absolute; width: 74px; text-align: center; color: var(--orange); font-size: 12px; transition: left .38s; }
+.cut-label { position: absolute; width: 74px; text-align: center; color: var(--orange); font-size: 12px; transition: left .24s; }
 .cut-label-a { top: 72px; }
 .cut-label-b { top: 322px; }
 .cross-comparisons { position: absolute; inset: 0; height: 357px; width: 100%; pointer-events: none; z-index: -1; }
